@@ -107,6 +107,6 @@ Project description and documentation
 # Author
 
 Cansu Akdemir
-Genetics and Bioengineering
-Istanbul Bilgi University
+
+Genetics and Bioengineering / Istanbul Bilgi University
 
