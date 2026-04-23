@@ -45,6 +45,24 @@ final_dataset <- merge(
   by = "depmap_id"
 )
 
+# 9.5 load sample metadata (contains cancer type info)
+sample_info <- fread("sample_info.csv")
+
+# Check column names to identify cancer type column
+colnames(sample_info)
+
+# 9.6 filter lung cancer cell lines using primary_disease
+lung_ids <- sample_info[
+  grepl("lung", primary_disease, ignore.case = TRUE),
+  DepMap_ID
+]
+
+# 9.7 keep only lung cancer samples in the final dataset
+final_dataset <- final_dataset[
+  depmap_id %in% lung_ids
+]
+
+# 9.8 check dataset dimensions after filtering
 dim(final_dataset)
 head(final_dataset)
 
