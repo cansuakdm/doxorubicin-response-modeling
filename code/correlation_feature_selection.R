@@ -30,14 +30,14 @@ hist(cor_vec,
      border = "black")
 
 # add threshold lines (+0.1 and -0.1) and zero reference line
-abline(v = 0.1, col = "darkgreen", lwd = 1.5, lty = 2)
-abline(v = -0.1, col = "darkgreen", lwd = 1.5, lty = 2)
+abline(v = 0.3, col = "darkgreen", lwd = 1.5, lty = 2)
+abline(v = -0.3, col = "darkgreen", lwd = 1.5, lty = 2)
 abline(v = 0, col = "red", lwd = 1.5)
 
 dev.off()
 
 # select genes with |correlation| >= 0.1 (threshold-based filtering)
-selected_genes <- cor_vec[abs(cor_vec) >= 0.1]
+selected_genes <- cor_vec[abs(cor_vec) >= 0.3]
 
 # number of selected genes
 length(selected_genes)
