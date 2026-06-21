@@ -240,14 +240,14 @@ Cansu Akdemir\
 Efehan Evren\
 Esra Rençberler
 
-Department of Genetics and Bioengineering
+Department of Genetics and Bioengineering\
 Istanbul Bilgi University
 
 ## Project Information
 
-Senior Design Project
-BIOE 492
-Department of Genetics and Bioengineering
+Senior Design Project\
+BIOE 492\
+Department of Genetics and Bioengineering\
 Istanbul Bilgi University
 
 Supervised by Asst. Prof. Dr. Özlem Ulucan Açan
