@@ -1,123 +1,227 @@
-# Integrative Modeling of Doxorubicin Response in Cancer Cells
+# Integrative Modeling of Doxorubicin Response in Lung Cancer Cell Lines
 
-This project investigates how gene expression influences sensitivity to the chemotherapeutic drug doxorubicin.
+This project investigates whether gene expression profiles can be used to predict sensitivity to the chemotherapeutic drug **doxorubicin** in **lung cancer cell lines**.
 
-The study focuses on gene expression–based drug response modeling to connect molecular data with drug sensitivity. The objective is to link gene expression profiles to drug response metrics (IC50) and evaluate whether these profiles can be used to predict response across cancer cell lines.
+The study integrates gene expression data from the **Cancer Cell Line Encyclopedia (CCLE)** with doxorubicin drug response data from the **PRISM Repurposing Drug Screen**. Using this integrated pharmacogenomic dataset, the project applies feature selection and machine learning methods to identify a candidate transcriptomic signature associated with doxorubicin response.
 
----
+## Project Aim
+
+The main objective of this project is to identify a gene expression-based predictive signature for doxorubicin sensitivity in lung cancer cell lines.
+
+Specifically, the project aims to:
+
+* integrate CCLE gene expression data with PRISM doxorubicin IC50 data,
+* filter the integrated dataset for lung cancer cell lines,
+* transform IC50 values into log10(IC50),
+* select genes associated with doxorubicin response,
+* build Random Forest regression models,
+* apply Recursive Feature Elimination (RFE),
+* identify a final predictive gene signature,
+* and interpret the selected genes using functional enrichment analysis.
 
 ## Background
 
-Doxorubicin is a widely used chemotherapeutic agent that induces apoptosis through DNA damage and activation of the p53 signaling pathway. However, cancer cell lines exhibit substantial variability in their sensitivity to this drug.
+Doxorubicin is a widely used chemotherapeutic drug. However, cancer cells may show different levels of sensitivity or resistance to doxorubicin. One possible reason for this variation is molecular heterogeneity, including differences in gene expression profiles.
 
-Gene expression data can be used to identify molecular features associated with drug response. Due to the high dimensionality of transcriptomic data, feature selection and regularized regression methods are required to build stable predictive models.
+Gene expression data can provide useful information about the biological state of cancer cells. By combining transcriptomic data with drug response measurements, it is possible to investigate whether specific gene expression patterns are associated with drug sensitivity or resistance.
 
-This project applies data-driven statistical modeling to investigate the relationship between gene expression and drug sensitivity.
-
----
+In this project, doxorubicin response was represented using **IC50 values**. IC50 is the drug concentration required to inhibit cell viability by 50%. Higher IC50 values generally indicate lower sensitivity or higher resistance, while lower IC50 values indicate higher sensitivity.
 
 ## Data Sources
 
-The datasets used in this project are obtained from the DepMap project:
+The datasets used in this project were obtained from the DepMap project:
 
-- CCLE (Cancer Cell Line Encyclopedia) gene expression dataset  
-- PRISM Repurposing Drug Screen dataset  
+* **CCLE gene expression dataset**
+* **PRISM Repurposing Drug Screen dose-response dataset**
+* **DepMap sample information dataset**
 
-Due to file size limitations, raw datasets are not included in this repository.
+Raw datasets are not included in this repository due to file size limitations.
 
-They can be downloaded from:  
+They can be downloaded from:
+
 https://depmap.org
 
----
+## Dataset Summary
+
+After dataset integration and filtering:
+
+| Step                                                 | Output         |
+| ---------------------------------------------------- | -------------- |
+| PRISM doxorubicin entries with available IC50 values | 471 cell lines |
+| Common cell lines between CCLE and PRISM             | 460 cell lines |
+| Lung cancer cell lines after filtering               | 96 cell lines  |
+| Initial gene expression features                     | 19,220 genes   |
+| Genes selected by correlation filtering              | 457 genes      |
+| Final selected predictive signature                  | 60 genes       |
 
 ## Project Workflow
 
-The project consists of three main stages.
+### 1. Dataset Integration
 
----
+CCLE gene expression data and PRISM doxorubicin IC50 data were matched using the shared **DepMap ID**.
 
-### 1. Dataset Construction
+Main steps:
 
-Gene expression and drug response datasets are integrated to construct a unified modeling dataset.
+* load CCLE gene expression data,
+* load PRISM drug response data,
+* filter PRISM data for doxorubicin,
+* remove missing IC50 values,
+* identify common DepMap IDs,
+* merge gene expression data with IC50 values,
+* filter for lung cancer cell lines,
+* transform IC50 values into log10(IC50).
 
-Steps:
+The final response variable used for modeling was **log10(IC50)**.
 
-- Load CCLE gene expression data  
-- Load PRISM drug response data  
-- Filter for doxorubicin  
-- Identify common cancer cell lines  
-- Merge gene expression and IC50 data  
-- Apply log transformation to IC50 values  
+### 2. Correlation-Based Feature Selection
 
-Output:
+Since the original gene expression matrix contained thousands of genes, feature selection was performed before model training.
 
-A dataset containing gene expression features and corresponding log(IC50) values.
+Main steps:
 
----
+* remove non-gene columns,
+* remove zero-variance genes,
+* calculate Pearson correlation between each gene and log10(IC50),
+* select genes with absolute Pearson correlation values greater than or equal to 0.25.
 
-### 2. Feature Selection and Statistical Analysis
+This step reduced the gene set from **19,220 genes** to **457 genes**.
 
-The dataset is analyzed to identify genes associated with drug sensitivity.
+### 3. Baseline Random Forest Regression
 
-Methods:
+A baseline Random Forest regression model was built using the 457 correlation-selected genes.
 
-- Removal of zero-variance genes  
-- Pearson correlation analysis between gene expression and log(IC50)  
-- Threshold-based feature selection (|correlation| ≥ 0.3)  
+Model evaluation was performed using **5-fold cross-validation**.
 
-This step reduces dimensionality and identifies candidate genes potentially associated with drug resistance and sensitivity.
+Performance metrics included:
 
-Output:
+* MAE,
+* RMSE,
+* R².
 
-A filtered gene expression matrix used for downstream modeling.
+In this project, R² was calculated as the squared Pearson correlation between actual and predicted log10(IC50) values.
 
----
+### 4. Recursive Feature Elimination
 
-### 3. LASSO Regression Modeling
+Recursive Feature Elimination was applied to identify smaller and more informative gene sets.
 
-To predict drug response, a regularized regression model is applied.
+The RFE procedure used Random Forest feature importance values based on **%IncMSE**. Genes with lower importance were removed iteratively, and multiple candidate gene sets were generated.
 
-Methods:
+Each RFE-selected gene set was evaluated using 5-fold cross-validation.
 
-- Train-test split (80% training, 20% testing)  
-- LASSO regression using glmnet  
-- Cross-validation to determine optimal lambda  
-- Prediction of log(IC50) values on the test set  
+### 5. Final Model Selection
 
-This step performs both prediction and automatic feature selection, selecting a subset of genes with non-zero coefficients.
+Two main criteria were considered:
 
----
+* **Overall RMSE**, which measures prediction error,
+* **Overall R²**, which measures explanatory performance.
 
-## Tools
+The 8-gene model achieved the lowest Overall RMSE. However, the 60-gene model achieved the highest Overall R² and provided better biological interpretability.
 
-- R  
-- data.table  
-- glmnet  
-- correlation analysis  
-- feature selection  
-- regression modeling  
+Therefore, the **60-gene Random Forest RFE model** was selected as the final predictive signature.
 
----
+## Main Results
+
+| Model                    | Gene Set Size | Overall RMSE | Overall R² | Selection Reason                          |
+| ------------------------ | ------------: | -----------: | ---------: | ----------------------------------------- |
+| Baseline Random Forest   |     457 genes |       0.3027 |     0.2315 | Initial model after correlation filtering |
+| Best RMSE RFE model      |       8 genes |       0.2773 |     0.3488 | Lowest prediction error                   |
+| Final selected RFE model |      60 genes |       0.2790 |     0.3747 | Highest Overall R²                        |
+
+The final 60-gene signature included genes such as:
+
+* **GRN**
+* **NUP98**
+* **MAP2K2**
+* **KLF4**
+* **RBM39**
+* **EEF2**
+* **WIPI2**
+
+These genes may be related to biological mechanisms such as survival signaling, apoptosis regulation, nuclear transport, MAPK signaling, RNA splicing, protein synthesis, and autophagy.
+
+## Functional Enrichment Analysis
+
+Functional enrichment analysis was performed using **g:Profiler** with **Homo sapiens** as the selected organism.
+
+The final 60-gene signature was mainly associated with cellular component and protein complex terms, including:
+
+* cytosol,
+* organelle subcompartment,
+* late endosome,
+* trans-Golgi network transport vesicle membrane,
+* granular vesicle,
+* Grb2-Sos complex.
+
+These findings suggest that doxorubicin response may involve multiple cellular processes rather than a single drug-response pathway.
 
 ## Repository Structure
 
-code/  
-R scripts used for dataset construction and analysis  
+```text
+doxorubicin-response-modeling/
+│
+├── code/
+│   ├── 01_dataset_integration_CCLE_PRISM.R
+│   ├── 02_correlation_feature_selection.R
+│   ├── 03_baseline_rf_5fold_cv.R
+│   └── 04_rf_rfe_all_gene_sets_5fold_cv.R
+│
+├── poster/
+│   └── senior_project_poster.pdf
+│
+├── report/
+│   └── senior_project_report.pdf
+│
+└── README.md
+```
 
-poster/  
-Senior project poster  
+## Tools and Packages
 
-report/  
-Full senior project report  
+This project was implemented in **R**.
 
-README.md  
-Project documentation  
+Main tools and packages:
 
----
+* R
+* data.table
+* randomForest
+* Pearson correlation analysis
+* Random Forest regression
+* Recursive Feature Elimination
+* 5-fold cross-validation
+* g:Profiler
+
+## Limitations
+
+This study has several limitations:
+
+* The final dataset included only 96 lung cancer cell lines.
+* The model was developed using cell line data, which may not fully represent patient tumors.
+* External validation was not performed.
+* The selected 60-gene signature should be considered a candidate predictive signature.
+
+## Future Work
+
+Future work may include:
+
+* validation using independent datasets,
+* testing the model on patient-derived data,
+* comparison with other machine learning algorithms,
+* integration of additional omics data such as mutation or copy number profiles,
+* experimental validation of selected genes.
 
 ## Author
 
-Cansu Akdemir  
+**Cansu Akdemir**
 
-Genetics and Bioengineering  
-Istanbul Bilgi University  
+Genetics and Bioengineering
+Istanbul Bilgi University
+
+## Project
+
+Senior Design Project
+BIOE 492
+Department of Genetics and Bioengineering
+Istanbul Bilgi University
+
+## Keywords
+
+Doxorubicin, lung cancer, CCLE, PRISM, DepMap, IC50, gene expression, transcriptomics, Random Forest, Recursive Feature Elimination, pharmacogenomics, machine learning, drug response prediction.
