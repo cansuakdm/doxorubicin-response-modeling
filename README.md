@@ -236,8 +236,8 @@ Future work may include:
 
 ## Authors
 
-Cansu Akdemir
-Efehan Evren
+Cansu Akdemir\
+Efehan Evren\
 Esra Rençberler
 
 Department of Genetics and Bioengineering
